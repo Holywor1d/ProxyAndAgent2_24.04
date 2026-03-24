@@ -458,9 +458,8 @@ BannerConfZabbixProxy
 Config_zabbix_proxy
 RecargaCache
 
-
-
-
 # Marca el archivo como ejecutado
 touch "$flag_file"
 log "El script se ha ejecutado con éxito y se ha marcado para no ejecutarse nuevamente."
+# Borrar el script solo si todo salió bien
+rm -- "$0"
