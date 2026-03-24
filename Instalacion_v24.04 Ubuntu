@@ -22,8 +22,8 @@ fi
 REQUIRED_OS_VERSION="24.04"
 
 #************** DATOS ZABBIX PROXY *******************
-ZABBIX_SERVER_IP_1="zabbix01.nubecentral.com"
-ZABBIX_SERVER_IP_2="zabbix02.nubecentral.com"
+ZABBIX_SERVER_IP_1="190.111.153.100"
+ZABBIX_SERVER_IP_2="190.111.153.99"
 #VALIDACION DE LA VERSION DEL PROXY zabbix
 ZABBIX_PROXY_VERSION="6.0"
 
@@ -193,11 +193,28 @@ function check_connectivity() {
     fi
         fi
 
-  # Realizar la verificación de conectividad si nc está presente
-  nc -zv $ZABBIX_SERVER_IP_1 10051 || { log "Error: No se puede conectar al puerto 10051"; exit 1; }
-#  nc -zv $ZABBIX_SERVER_IP_2 10051 || { log "Error: No se puede conectar al puerto 10051"; exit 1; }// el sever_2 no responde ni por ping parece inhabilitado
+# Realizar la verificación de conectividad si nc está presente
+SERVERS=("$ZABBIX_SERVER_IP_1" "$ZABBIX_SERVER_IP_2")
+CONNECTED_SERVER=""
 
-  log "Conectividad verificada."
+for SERVER in "${SERVERS[@]}"; do
+    if nc -zv "$SERVER" 10051 2>/dev/null; then
+        log "Conectividad exitosa a $SERVER en el puerto 10051"
+        CONNECTED_SERVER="$SERVER"
+        break  # Salir del bucle al encontrar el primer servidor funcional
+    else
+        log "Advertencia: No se puede conectar a $SERVER en el puerto 10051"
+    fi
+done
+
+if [ -z "$CONNECTED_SERVER" ]; then
+    log "Error: No hay conectividad con ningún servidor Zabbix en el puerto 10051"
+    exit 1
+fi
+
+# Aquí puedes usar $CONNECTED_SERVER para saber qué servidor está disponible
+log "Usando servidor Zabbix: $CONNECTED_SERVER"
+log "Conectividad verificada."
 }
 
 function BannerZabbixAgent2() {
@@ -427,9 +444,9 @@ log
 BannerGWS
 check_root
 Hostname_proxy
-key_Psk
 check_os_version
 check_connectivity
+key_Psk
 BannerZabbixAgent2
 Install_zabbix_agent
 BannerZabbixproxy
